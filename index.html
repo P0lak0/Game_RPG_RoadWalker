@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Текстовая RPG — Дорога</title>
+  <style>
+    @font-face {
+      font-family: 'Perfect DOS VGA 437';
+      src: url('https://unpkg.com/dos-font@1.0.0/web/PerfectDOSVGA437.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+    
+    @font-face {
+      font-family: 'Windows XP';
+      src: local('Tahoma'), local('Verdana'), local('Arial');
+    }
+    
+    :root{
+      --xp-blue: #0080ff;
+      --xp-light-blue: #9fc7e4;
+      --xp-dark-blue: #004080;
+      --xp-gray: #c0c0c0;
+      --xp-light-gray: #e0e0e0;
+      --xp-dark-gray: #808080;
+      --xp-white: #ffffff;
+      --xp-black: #000000;
+      --xp-green: #008000;
+      --xp-red: #ff0000;
+      --xp-yellow: #ffff00;
+    }
+    
+    *{box-sizing:border-box; margin:0; padding:0}
+    
+    body{
+      margin:0; 
+      background: linear-gradient(135deg, var(--xp-blue) 0%, var(--xp-dark-blue) 100%);
+      color:var(--xp-black); 
+      font-family: 'Windows XP', Tahoma, Verdana, Arial, sans-serif;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .container{
+      max-width:800px; 
+      margin:20px auto; 
+      padding:15px;
+      background: var(--xp-light-gray);
+      border: 2px solid var(--xp-dark-gray);
+      border-radius: 0;
+      box-shadow: 4px 4px 0px var(--xp-dark-gray);
+    }
+    
+    .stats{
+      display:grid; 
+      grid-template-columns:repeat(5,1fr); 
+      gap:6px; 
+      position:sticky; 
+      top:0; 
+      padding:8px;
+      background: var(--xp-gray);
+      border: 2px solid var(--xp-dark-gray);
+      z-index:5;
+      margin-bottom: 15px;
+    }
+    
+    .stat{
+      background: var(--xp-white);
+      border: 2px solid var(--xp-dark-gray);
+      border-radius: 0;
+      padding:8px;
+      text-align:center;
+      font-family: 'Perfect DOS VGA 437', 'Courier New', monospace;
+      font-size: 11px;
+      box-shadow: inset 1px 1px 0px var(--xp-light-gray), inset -1px -1px 0px var(--xp-dark-gray);
+    }
+    
+    #scene{
+      background: var(--xp-white);
+      border: 2px solid var(--xp-dark-gray);
+      border-radius: 0;
+      padding:15px;
+      margin-bottom: 15px;
+      box-shadow: inset 1px 1px 0px var(--xp-light-gray), inset -1px -1px 0px var(--xp-dark-gray);
+    }
+    
+    #text{
+      line-height:1.5;
+      font-family: 'Windows XP', Tahoma, Verdana, Arial, sans-serif;
+      font-size: 13px;
+      margin-bottom: 15px;
+      color: var(--xp-black);
+    }
+    
+    #actions{
+      display:flex; 
+      flex-wrap:wrap; 
+      gap:6px; 
+      margin-top:12px;
+    }
+    
+    button{
+      background: linear-gradient(to bottom, var(--xp-light-blue) 0%, var(--xp-blue) 100%);
+      border: 2px solid;
+      border-top-color: var(--xp-white);
+      border-left-color: var(--xp-white);
+      border-right-color: var(--xp-dark-blue);
+      border-bottom-color: var(--xp-dark-blue);
+      border-radius: 0;
+      padding:6px 12px;
+      color: var(--xp-black);
+      cursor:pointer;
+      font-family: 'Perfect DOS VGA 437', 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      min-width: 120px;
+      height: 32px;
+      box-shadow: 2px 2px 0px var(--xp-dark-gray);
+      transition: all 0.1s ease;
+    }
+    
+    button:hover{
+      background: linear-gradient(to bottom, var(--xp-blue) 0%, var(--xp-dark-blue) 100%);
+      color: var(--xp-white);
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px var(--xp-dark-gray);
+    }
+    
+    button:active{
+      transform: translate(2px, 2px);
+      box-shadow: 0px 0px 0px var(--xp-dark-gray);
+      border-top-color: var(--xp-dark-blue);
+      border-left-color: var(--xp-dark-blue);
+      border-right-color: var(--xp-white);
+      border-bottom-color: var(--xp-white);
+    }
+    
+    button:disabled{
+      background: var(--xp-gray);
+      color: var(--xp-dark-gray);
+      border: 2px solid var(--xp-dark-gray);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    
+    button.accent{
+      background: linear-gradient(to bottom, #90ee90 0%, var(--xp-green) 100%);
+      border-right-color: #006400;
+      border-bottom-color: #006400;
+    }
+    
+    button.danger{
+      background: linear-gradient(to bottom, #ffb6c1 0%, var(--xp-red) 100%);
+      border-right-color: #8b0000;
+      border-bottom-color: #8b0000;
+    }
+    
+    #history{
+      background: var(--xp-black);
+      border: 2px solid var(--xp-dark-gray);
+      border-radius: 0;
+      padding:12px;
+      height:200px;
+      overflow-y:auto;
+      font-family: 'Perfect DOS VGA 437', 'Courier New', monospace;
+      font-size: 12px;
+      color: #00ff00;
+      line-height: 1.3;
+      white-space:pre-wrap;
+      box-shadow: inset 1px 1px 0px #333, inset -1px -1px 0px #333;
+    }
+    
+    small.muted{
+      color: var(--xp-dark-gray);
+      font-style: italic;
+    }
+    
+    .toolbar{
+      display:flex; 
+      gap:8px; 
+      margin-top:15px;
+    }
+    
+    .window-title{
+      background: linear-gradient(90deg, var(--xp-dark-blue) 0%, var(--xp-blue) 100%);
+      color: var(--xp-white);
+      padding: 8px 15px;
+      margin: -15px -15px 15px -15px;
+      border-bottom: 2px solid var(--xp-dark-gray);
+      font-family: 'Perfect DOS VGA 437', 'Courier New', monospace;
+      font-weight: bold;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* Стили для скроллбара в стиле XP */
+    #history::-webkit-scrollbar {
+      width: 16px;
+    }
+    
+    #history::-webkit-scrollbar-track {
+      background: var(--xp-gray);
+      border: 2px solid var(--xp-dark-gray);
+      box-shadow: inset 1px 1px 0px var(--xp-light-gray);
+    }
+    
+    #history::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, var(--xp-light-blue) 0%, var(--xp-blue) 100%);
+      border: 2px solid;
+      border-top-color: var(--xp-white);
+      border-left-color: var(--xp-white);
+      border-right-color: var(--xp-dark-blue);
+      border-bottom-color: var(--xp-dark-blue);
+    }
+    
+    /* Анимация мигающего курсора для лога */
+    #history::after {
+      content: '_';
+      animation: blink 1s infinite;
+      color: #00ff00;
+    }
+    
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="window-title">🚀 RPG ADVENTURE - WINDOWS XP EDITION</div>
+    
+    <div class="stats">
+      <div class="stat">❤️ HP: <span id="hp"></span>/<span id="hpMax"></span></div>
+      <div class="stat">💰 ЗОЛОТО: <span id="gold"></span></div>
+      <div class="stat">📦 РЕСУРСЫ: <span id="res"></span></div>
+      <div class="stat">💥 ATKАКА: <span id="atk"></span></div>
+      <div class="stat">⚡ СИЛА: <span id="pow"></span>/<span id="powMax"></span></div>
+    </div>
+
+    <div id="scene">
+      <div id="text"></div>
+      <div id="actions"></div>
+    </div>
+
+    <div id="history" aria-label="SYSTEM LOG"></div>
+    <div class="toolbar">
+      <button id="clearLog">CLEAR LOG</button>
+      <button id="restart">NEW GAME</button>
+    </div>
+  </div>
+
+  <script>
+    // === СОСТОЯНИЕ ===
+    const state = {
+      hp: 100, hpMax: 100,
+      gold: 10,
+      res: 0,
+      atk: 1, // влияет на урон по врагу (кузнец повышает)
+      pow: 50, powMax: 50, // новая «сила» — тратится на действия и восстановление
+      scene: 'road',
+      enemy: null,
+      village: { rate: null, restPrice: null, forgePrice: null, tavernPrice: null },
+      forestCost: null, // текущая стоимость силы для охоты (за вход в лес генерируется заново)
+      lakeCost: null,   // текущая стоимость силы для рыбалки (за вход к озеру генерируется заново)
+      log: []
+    };
+
+    // === БАЛАНС ===
+    const BALANCE = {
+      roadWeights: { enemy: 0.4, village: 0.25, forest: 0.2, lake: 0.15 },
+      fleeGoldMin: 2, fleeGoldMax: 10,
+      enemy: { hpMin: 15, hpMax: 35, dmgMin: 3, dmgMax: 8, playerBaseDmgMin: 3, playerBaseDmgMax: 7, rewardResMin: 1, rewardResMax: 5 },
+      rest: { healMin: 15, healMax: 30, robChance: 0.12, robMin: 1, robMax: 15 },
+      village: { rateMin: 2, rateMax: 5, restPriceMin: 8, restPriceMax: 14, forgeBasePrice: 12, forgePriceStep: 6, tavernBasePrice: 15, tavernPriceMultiplier: 0.2 },
+      forest: { resMin: 1, resMax: 3, hurtChance: 0.35, hurtMin: 2, hurtMax: 10, powCostMin: 5, powCostMax: 15 },
+      lake: { baitCost: 1, successChance: 0.65, resGainMin: 3, resGainMax: 5, powCostMin: 5, powCostMax: 15 }
+    };
+
+    const ENEMY_NAMES = ["Волк", "Разбойник", "Покойник", "Медведь", "Гоблин", "Орк", "Бандит", "Вепрь", "Ведьма"];
+
+    // === УТИЛИТЫ ===
+    const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const chance = (p) => Math.random() < p;
+    function log(msg){
+      const timestamp = new Date().toLocaleTimeString();
+      state.log.push(`[${timestamp}] ${msg}`);
+      const h = document.getElementById('history');
+      const el = document.createElement('div');
+      el.textContent = `> ${msg}`;
+      el.style.fontFamily = "'Perfect DOS VGA 437', 'Courier New', monospace";
+      el.style.fontSize = "11px";
+      h.appendChild(el);
+      h.scrollTop = h.scrollHeight;
+    }
+
+    // === РЕНДЕР ===
+    function renderStats(){
+      document.getElementById('hp').textContent = state.hp;
+      document.getElementById('hpMax').textContent = state.hpMax;
+      document.getElementById('gold').textContent = state.gold;
+      document.getElementById('res').textContent = state.res;
+      document.getElementById('atk').textContent = state.atk;
+      document.getElementById('pow').textContent = state.pow;
+      document.getElementById('powMax').textContent = state.powMax;
+    }
+    function setText(html){ document.getElementById('text').innerHTML = html; }
+    function setActions(buttons){
+      const c = document.getElementById('actions');
+      c.innerHTML = '';
+      buttons.forEach(b=>{
+        const btn = document.createElement('button');
+        btn.textContent = b.label;
+        if(b.className) btn.className = b.className;
+        btn.onclick = b.onClick;
+        if (b.disabled) btn.disabled = true;
+        c.appendChild(btn);
+      });
+    }
+
+    // === ДОРОГА ===
+    function goToRoad(initial=false){
+      state.scene = 'road';
+      setText(initial
+        ? '<b>ВЫ НА ДОРОГЕ.</b> НАЖМИТЕ «ВПЕРЁД», ЧТОБЫ НАЧАТЬ ПУТЕШЕСТВИЕ.'
+        : '<b>ВЫ СНОВА НА ДОРОГЕ.</b> ЧТО ЖДЁТ ВАС ВПЕРЕДИ?');
+      setActions([{ label: 'ВПЕРЁД', className: 'accent', onClick: ()=>{ log('ВЫ ДВИГАЕТЕСЬ ПО ДОРОГЕ...'); rollEvent(); } }]);
+      if (initial) log('СИСТЕМА ЗАПУЩЕНА. ДОБРО ПОЖАЛОВАТЬ В ПРИКЛЮЧЕНИЕ!');
+    }
+
+    function rollEvent(){
+      const r = Math.random();
+      const w = BALANCE.roadWeights; let acc = 0;
+      if (r < (acc += w.enemy)) return enterEnemy();
+      if (r < (acc += w.village)) return enterVillage();
+      if (r < (acc += w.forest)) return enterForest();
+      return enterLake();
+    }
+
+    // === ВРАГ ===
+    function enterEnemy(){
+      const eHP = rnd(BALANCE.enemy.hpMin, BALANCE.enemy.hpMax);
+      const eDmg = rnd(BALANCE.enemy.dmgMin, BALANCE.enemy.dmgMax);
+      const name = ENEMY_NAMES[rnd(0, ENEMY_NAMES.length-1)];
+      state.enemy = { hp: eHP, dmg: eDmg, name };
+      state.scene = 'enemy';
+      setText(`<b>${name}!</b> ЗДОРОВЬЕ ВРАГА: ${eHP}. УРОН ВРАГА: ${eDmg}.`);
+      setActions([
+        { label: 'АТАКА (-1 СИЛА)', className: 'danger', onClick: attackEnemy, disabled: state.pow <= 0 },
+        { label: 'ПОБЕГ', onClick: fleeEnemy }
+      ]);
+      log(`ОБНАРУЖЕН ${name} (HP ${eHP}, DMG ${eDmg})`);
+    }
+
+    function attackEnemy(){
+      if (state.scene !== 'enemy' || !state.enemy) return;
+      if (state.pow <= 0){ log('НЕДОСТАТОЧНО СИЛЫ ДЛЯ АТАКИ'); return; }
+      state.pow -= 1;
+      const dmg = rnd(BALANCE.enemy.playerBaseDmgMin, BALANCE.enemy.playerBaseDmgMax) + state.atk;
+      state.enemy.hp -= dmg;
+      log(`АТАКА ПО ${state.enemy.name}: ${dmg} УРОНА. (HP ВРАГА: ${Math.max(0, state.enemy.hp)})`);
+
+      if (state.enemy.hp <= 0){
+        const gain = rnd(BALANCE.enemy.rewardResMin, BALANCE.enemy.rewardResMax);
+        state.res += gain;
+        log(`${state.enemy.name} УНИЧТОЖЕН! +${gain} РЕСУРСОВ.`);
+        state.enemy = null;
+        state.scene = 'postBattle';
+        setText(`<b>ПОБЕДА!</b> ВЫБЕРИТЕ ДАЛЬНЕЙШЕЕ ДЕЙСТВИЕ`);
+        setActions([
+          { label: 'ВПЕРЁД', className: 'accent', onClick: ()=>{ log('ПРОДОЛЖЕНИЕ ПУТИ...'); goToRoad(false); } },
+          { label: 'ОТДОХНУТЬ', onClick: restOutside }
+        ]);
+        renderStats();
+        return;
+      }
+
+      // Ответный удар врага
+      const eHit = rnd(state.enemy.dmg, state.enemy.dmg + 2);
+      state.hp -= eHit;
+      log(`${state.enemy.name} АТАКУЕТ: ${eHit} УРОНА. (ВАШЕ HP: ${Math.max(0, state.hp)})`);
+      if (state.hp <= 0) return gameOver(`${state.enemy.name} ОКАЗАЛСЯ СИЛЬНЕЕ. ВЫ ПОГИБЛИ В БОЮ.`);
+
+      setText(`<b>БОЙ!</b> ${state.enemy.name} ЕЩЁ СРАЖАЕТСЯ.`);
+      setActions([
+        { label: 'АТАКА (-1 СИЛА)', className: 'danger', onClick: attackEnemy, disabled: state.pow <= 0 },
+        { label: 'ПОБЕГ', onClick: fleeEnemy }
+      ]);
+      renderStats();
+    }
+
+    function fleeEnemy(){
+      const lose = Math.min(state.gold, rnd(BALANCE.fleeGoldMin, BALANCE.fleeGoldMax));
+      state.gold -= lose;
+      log(`ПОБЕГ УСПЕШЕН. ПОТЕРЯНО ЗОЛОТА: ${lose}`);
+      renderStats();
+      goToRoad(false);
+    }
+
+    // === ОТДЫХ ВНЕ ДЕРЕВНИ ===
+    function restOutside(){
+      const robbed = chance(BALANCE.rest.robChance);
+      if (robbed && state.res > 0){
+        const loss = Math.min(state.res, rnd(BALANCE.rest.robMin, BALANCE.rest.robMax));
+        state.res -= loss;
+        log(`ВЫ БЫЛИ ОГРАБЛЕНЫ ВО ВРЕМЯ ОТДЫХА. ПОТЕРЯНО: ${loss} РЕСУРСОВ`);
+      }
+      const heal = rnd(BALANCE.rest.healMin, BALANCE.rest.healMax);
+      const before = state.hp;
+      state.hp = Math.min(state.hpMax, state.hp + heal);
+      state.pow = state.powMax; // восстановление силы полностью
+      log(`ОТДЫХ: +${state.hp - before} HP, СИЛА ВОССТАНОВЛЕНА`);
+      renderStats();
+      goToRoad(false);
+    }
+
+    // === ДЕРЕВНЯ ===
+    function enterVillage(){
+      state.scene = 'village';
+      const rate = rnd(BALANCE.village.rateMin, BALANCE.village.rateMax);
+      const restPrice = rnd(BALANCE.village.restPriceMin, BALANCE.village.restPriceMax);
+      const forgePrice = BALANCE.village.forgeBasePrice + (state.atk - 1) * BALANCE.village.forgePriceStep;
+      const tavernPrice = (BALANCE.village.tavernBasePrice + (state.powMax - 45) * 2);
+      //const tavernPrice = Math.floor(BALANCE.village.tavernBasePrice * Math.pow(BALANCE.village.tavernPriceMultiplier, state.powMax - 50));
+      
+      state.village = { rate, restPrice, forgePrice, tavernPrice };
+
+      setText(`<b>ДЕРЕВНЯ.</b>`+
+              `<div><small class=\"muted\">КУРС: 1 РЕСУРС = ${rate} ЗОЛОТА</small></div>`+
+              `<div><small class=\"muted\">ОТДЫХ: ПОЛНОЕ ВОССТАНОВЛЕНИЕ ЗА ${restPrice} ЗОЛОТА</small></div>`+
+              `<div><small class=\"muted\">КУЗНЕЦ: +1 АТАКА ЗА ${forgePrice} ЗОЛОТА</small></div>`+
+              `<div><small class=\"muted\">ТАВЕРНА: +10 СИЛЫ ЗА ${tavernPrice} ЗОЛОТА</small></div>`);
+
+      setActions([
+        { label: `ТОРГОВАТЬ (ВСЁ)`, onClick: tradeAll, disabled: state.res <= 0 },
+        { label: `ОТДЫХ (${restPrice})`, onClick: restVillage, disabled: state.gold < restPrice },
+        { label: `КУЗНЕЦ (${forgePrice})`, onClick: forge, disabled: state.gold < forgePrice },
+        { label: `ТАВЕРНА (${tavernPrice})`, onClick: tavern, disabled: state.gold < tavernPrice },
+        { label: 'ДАЛЬШЕ', className: 'accent', onClick: ()=>{ log('ВЫХОД ИЗ ДЕРЕВНИ...'); goToRoad(false); } }
+      ]);
+
+      log('ВХОД В ДЕРЕВНЮ');
+    }
+
+    function tradeAll(){
+      const { rate } = state.village;
+      const amount = state.res;
+      const gain = amount * rate;
+      state.res = 0;
+      state.gold += gain;
+      log(`ОБМЕН: ${amount} РЕСУРСОВ → ${gain} ЗОЛОТА (КУРС ${rate})`);
+      renderStats();
+      enterVillage();
+    }
+
+    function restVillage(){
+      const { restPrice } = state.village;
+      if (state.gold < restPrice) return;
+      state.gold -= restPrice;
+      const healed = state.hpMax - state.hp;
+      state.hp = state.hpMax;
+      state.pow = state.powMax;
+      log(`ОТДЫХ В ТАВЕРНЕ: +${healed} HP, СИЛА ВОССТАНОВЛЕНА. -${restPrice} ЗОЛОТА`);
+      renderStats();
+      enterVillage();
+    }
+
+    function forge(){
+      const { forgePrice } = state.village;
+      if (state.gold < forgePrice) return;
+      state.gold -= forgePrice;
+      state.atk += 1;
+      log(`КУЗНЕЦ: АТАКА +1. -${forgePrice} ЗОЛОТА`);
+      renderStats();
+      enterVillage();
+    }
+
+    function tavern(){
+      const { tavernPrice } = state.village;
+      if (state.gold < tavernPrice) return;
+      state.gold -= tavernPrice;
+      state.powMax += 10;
+      state.pow = state.powMax; // Восстанавливаем силу до нового максимума
+      log(`ТАВЕРНА: МАКС. СИЛА +10 (ТЕПЕРЬ ${state.powMax}). -${tavernPrice} ЗОЛОТА`);
+      renderStats();
+      enterVillage();
+    }
+
+    // === ЛЕС ===
+    function enterForest(){
+      state.scene = 'forest';
+      state.forestCost = rnd(BALANCE.forest.powCostMin, BALANCE.forest.powCostMax); // каждый раз новый
+      setText(`<b>ЛЕС.</b> ОХОТА ЗА РЕСУРСАМИ. <small class=\"muted\">ТРЕБУЕТСЯ ${state.forestCost} СИЛЫ</small>`);
+      setActions([
+        { label: `ОХОТА (-${state.forestCost})`, onClick: hunt, disabled: state.pow < state.forestCost },
+        { label: 'ДАЛЬШЕ', className: 'accent', onClick: ()=>{ log('ВЫХОД ИЗ ЛЕСА...'); goToRoad(false); } }
+      ]);
+      log('ВХОД В ЛЕС');
+    }
+
+    function hunt(){
+      const cost = state.forestCost ?? BALANCE.forest.powCostMin;
+      if (state.pow < cost){ log('НЕДОСТАТОЧНО СИЛЫ ДЛЯ ОХОТЫ'); return; }
+      state.pow -= cost;
+      const gain = rnd(BALANCE.forest.resMin, BALANCE.forest.resMax);
+      state.res += gain;
+      log(`ОХОТА: +${gain} РЕСУРСОВ. -${cost} СИЛЫ`);
+      if (chance(BALANCE.forest.hurtChance)){
+        const hurt = rnd(BALANCE.forest.hurtMin, BALANCE.forest.hurtMax);
+        state.hp -= hurt;
+        log(`РАНЕНИЕ: -${hurt} HP`);
+        if (state.hp <= 0) return gameOver('ВЫ ИСТЕКЛИ КРОВЬЮ В ЛЕСУ');
+      }
+      renderStats();
+      enterForest();
+    }
+
+    // === ОЗЕРО ===
+    function enterLake(){
+      state.scene = 'lake';
+      state.lakeCost = rnd(BALANCE.lake.powCostMin, BALANCE.lake.powCostMax); // каждый раз новый
+      setText(`<b>ОЗЕРО.</b> РЫБАЛКА. <small class=\"muted\">ТРЕБУЕТСЯ ${BALANCE.lake.baitCost} РЕСУРС И ${state.lakeCost} СИЛЫ</small>`);
+      setActions([
+        { label: `РЫБАЛКА (-${state.lakeCost})`, onClick: fish, disabled: state.res < BALANCE.lake.baitCost || state.pow < state.lakeCost },
+        { label: 'ДАЛЬШЕ', className: 'accent', onClick: ()=>{ log('ВЫХОД ОТ ОЗЕРА...'); goToRoad(false); } }
+      ]);
+      log('ПОДХОД К ОЗЕРУ');
+    }
+
+    function fish(){
+      const cost = state.lakeCost ?? BALANCE.lake.powCostMin;
+      if (state.res < BALANCE.lake.baitCost){ log('НУЖНА НАЖИВКА (РЕСУРСЫ)'); return; }
+      if (state.pow < cost){ log('НЕДОСТАТОЧНО СИЛЫ ДЛЯ РЫБАЛКИ'); return; }
+      state.res -= BALANCE.lake.baitCost;
+      state.pow -= cost;
+      if (chance(BALANCE.lake.successChance)){
+        const gain = rnd(BALANCE.lake.resGainMin, BALANCE.lake.resGainMax);
+        state.res += gain;
+        log(`РЫБАЛКА УСПЕШНА: +${gain} РЕСУРСОВ. -${BALANCE.lake.baitCost} РЕСУРС, -${cost} СИЛЫ`);
+      } else {
+        log(`РЫБАЛКА ПРОВАЛЕНА. -${BALANCE.lake.baitCost} РЕСУРС, -${cost} СИЛЫ`);
+      }
+      renderStats();
+      enterLake();
+    }
+
+    // === КОНЕЦ ИГРЫ / РЕСТАРТ ===
+    function gameOver(reason){
+      state.scene = 'dead';
+      setText(`<b>ВЫ ПОГИБЛИ.</b> ${reason}`);
+      setActions([{ label: 'НОВАЯ ИГРА', className: 'accent', onClick: resetGame }]);
+      log(`GAME OVER. ${reason}`);
+    }
+
+    function resetGame(){
+      state.hp = 100; state.hpMax = 100;
+      state.gold = 10; state.res = 0; state.atk = 1;
+      state.pow = 50; state.powMax = 50;
+      state.enemy = null; state.village = { rate:null, restPrice:null, forgePrice:null, tavernPrice:null };
+      state.forestCost = null; state.lakeCost = null;
+      document.getElementById('history').innerHTML = '';
+      state.log = [];
+      renderStats();
+      goToRoad(true);
+    }
+
+    // === ТУЛБАР И СТАРТ ===
+    document.getElementById('clearLog').onclick = () => { document.getElementById('history').innerHTML=''; log('ЛОГ ОЧИЩЕН'); };
+    document.getElementById('restart').onclick = resetGame;
+
+    renderStats();
+    goToRoad(true);
+  </script>
+</body>
+</html>
